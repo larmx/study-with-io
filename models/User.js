@@ -1,18 +1,19 @@
-var Mongoose = require('mongoose');
+const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 mongoose.connect("mongodb://localhost/users");
-var Hash = require('password-hash');
-var Schema = Mongoose.Schema;
+const Hash = require('password-hash');
+const Schema = mongoose.Schema;
 
-var UserSchema = new Schema({
+const UserSchema = new Schema({
     username: { type: String },
     password: { type: String, set: function(newValue) {
         return Hash.isHashed(newValue) ? newValue : Hash.generate(newValue);
     } },
     status: { type: String },
-    level: { type: Number },
+    grade: { type: Number },
     goal: { type: Number },
-    total_point : { type: Number }
+    totalPoint : { type: Number },
+    professorId: { type: Array }
 });
 
 UserSchema.statics.authenticate = function(username, password, callback) {
@@ -30,6 +31,6 @@ UserSchema.statics.authenticate = function(username, password, callback) {
     });
 };
 
-var User = mongoose.model('User', UserSchema);
+const User = mongoose.model('User', UserSchema);
 
 module.exports = User;
