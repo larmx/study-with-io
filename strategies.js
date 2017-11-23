@@ -1,6 +1,6 @@
 var LocalStrategy = require('passport-local').Strategy;
-var Hash = require('password-hash');
-var User = require('./models/user');
+
+var User = require('./models/User');
 
 var ex = function (passport){
 

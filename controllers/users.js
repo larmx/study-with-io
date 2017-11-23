@@ -1,4 +1,5 @@
 const User = require('../models/user');
+const {testUsername, testPassword, testConf} = require('../utils/testInput');
 
 module.exports = {
     requireStudent (req, res, next) {
@@ -53,22 +54,17 @@ module.exports = {
             type : []
             fail : false
         }
-        const username = req.param("username");
-        const password = req.param("password");
-        const conf = req.param("confirmation");
-        const status = req.param("status");
-        const grade = req.param("grade");
-        const goal = req.param("goal")
+        const { username, password, conf, status, goal, grade} = req.body;
 
-
-        testUsername(name, error);
+        testUsername(username, error);
         testPassword(password, error);
         testConf(password, conf, error);
 
         if (error == true){
             return new ResponseFormat(res).error(error.type).send();
         } else {
-            User.create({username: username, password: password, status: status, grade: grade, goal: goal}, function(err, user) {
+            encryptedPassword = await bcrypt.hash(password, authConfig.bcrypt.saltRounds);
+            User.create({username: username, password: encryptedPassword, status: status, grade: grade, goal: goal}, function(err, user) {
                 if(err){
                     return new ResponseFormat(res).error(err).send();
                 }
@@ -77,32 +73,40 @@ module.exports = {
         }
     }
 
-    testUsername(username, error){
-      if (username.length < 3){
-          error.type.push('lenUsername');
-          error.fail = true;
-        }
-      User.find({username : username}, function(err, user){
-         if (user != null){
-             error.type.push('username');
-             error.fail = true;
-           };
-         })
-     }
+    async update(req, res) {
+        const { username, password, goal, grade} = req.body;
+        const { idUser } = req.params;
 
-    testPassword(password, error){
-      if (password.length < 3){
-            error.type.push('password');
-            error.fail = true;
+        if (!idUser) {
+          return new ResponseFormat(res).forbidden('ID utilisateur manquant.').send();
         }
-    }
 
-    testConf(password, conf, error){
-      if (password != conf){
-        error.type.push('conf');
-        error.fail = true;
-      }
-    }
+        try {
+          const user = await User.findById(idUser);
+
+          if (!user) {
+            return new ResponseFormat(res).notFound('Utilisateur introuvable.').send();
+          }
+
+          user.username = username || user.username;
+          user.password = password || user.password;
+          user.goal = goal || user.goal;
+          user.grade = grade || user.grade;
+
+          await user.validate();
+
+          if (password) {
+            user.password = await bcrypt.hash(password, authConfig.bcrypt.saltRounds);
+          }
+
+          await user.save();
+
+          return new ResponseFormat(res).success(user).send();
+
+        } catch (e) {
+          return new ResponseFormat(res).error(e).send();
+        }
+      },
 
     async delete(req, res){
         const id = req.param("id");
@@ -113,4 +117,6 @@ module.exports = {
             return new ResponseFormat(res).success().send();
         });
     }
+
+
 }

@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 mongoose.connect("mongodb://localhost/users");
-var Schema = Mongoose.Schema;
+const Hash = require('password-hash');
+const Schema = mongoose.Schema;
 
 const UserSchema = new Schema({
     username: { type: String },
@@ -15,6 +16,6 @@ const UserSchema = new Schema({
     professorId: { type: Array }
 });
 
-var User = mongoose.model('User', UserSchema);
+const User = mongoose.model('User', UserSchema);
 
 module.exports = User;

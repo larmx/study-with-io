@@ -1,6 +1,6 @@
 const express = require('express');
 const { users } = require('../controllers/users');
-// const { ensureLoggedIn } = require('../middlewares/authentication');
+// const { userAuthenticate } = require('../middlewares/authentication');
 const upload = require('../middlewares/uploader');
 
 const usersRoutes = express.Router();
