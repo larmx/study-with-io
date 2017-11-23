@@ -1,4 +1,6 @@
 const User = require('../models/user');
+const bcrypt = require('bcrypt');
+const authConfig = require('../config/auth');
 const {testUsername, testPassword, testConf} = require('../utils/testInput');
 
 module.exports = {
@@ -11,7 +13,7 @@ module.exports = {
         }else{
             return new ResponseFormat(res).forbidden().send();
         }
-    };
+    },
 
     login(req, res) {
       if (req.user.statut == "Student"){
@@ -23,35 +25,36 @@ module.exports = {
       else {
         return res.redirect('/');
       }
-    });
+  },
 
     logout(req, res) {
         req.logout();
         return new ResponseFormat(res).success().send();
-    }
+    },
 
     async index(req, res) {
-      const search = req.param("search");
-      if (search == null){
-        User.find({}, function(err, users){
-            if(err){
-                return new ResponseFormat(res).error(err).send();
-            }
-            return new ResponseFormat(res).success(users).send();
-      });
-      } else {
-        User.find({username : search}, function(err, users){
-            if(err){
-                return new ResponseFormat(res).error(err).send();
-            }
-            return new ResponseFormat(res).success(users).send();
-      });
-      }
-    }
+        const search = req.param("search");
+        if (search == null){
+            User.find({}, function(err, users){
+                if(err){
+                    return new ResponseFormat(res).error(err).send();
+                }
+                return new ResponseFormat(res).success(users).send();
+            });
+        } else {
+            User.find({username : search}, function(err, users){
+                if(err){
+                    return new ResponseFormat(res).error(err).send();
+                }
+                return new ResponseFormat(res).success(users).send();
+            });
+        }
+    },
 
     async register(req, res){
+        console.log("COUCOUUUUUUUUUU");
         let error = {
-            type : []
+            type : [],
             fail : false
         }
         const { username, password, conf, status, goal, grade} = req.body;
@@ -71,7 +74,7 @@ module.exports = {
                 return new ResponseFormat(res).success().send();
           });
         }
-    }
+    },
 
     async update(req, res) {
         const { username, password, goal, grade} = req.body;
@@ -116,7 +119,5 @@ module.exports = {
             }
             return new ResponseFormat(res).success().send();
         });
-    }
-
-
+    },
 }

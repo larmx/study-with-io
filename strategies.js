@@ -1,8 +1,9 @@
-var LocalStrategy = require('passport-local').Strategy;
+const LocalStrategy = require('passport-local').Strategy;
+const bcrypt = require('bcrypt');
+const User = require('./models/User');
+const authConfig = require('./config/auth');
 
-var User = require('./models/User');
-
-var ex = function (passport){
+const ex = function (passport){
 
   passport.serializeUser(function(user, done) {
   done(null, user);
@@ -20,18 +21,18 @@ passport.use('login', new LocalStrategy({
     passReqToCallback : true
   },
   function(req, username, password, done) {
-    User.findOne({ username: username }, function(error, user) {
-        if (user &amp;&amp; Hash.verify(password, user.password)) {
-            callback(null, user);
-        } else if (user || !error) {
-            // Username or password was invalid (no MongoDB error)
-            error = new Error("Your username or password is invalid. Please try again.");
-            callback(error, null);
-        } else {
-            // Something bad happened with MongoDB. You shouldn't run into this often.
-            callback(error, null);
-        }
+    User.findOne({ username: username }, function (err, user) {
+      if (err) { return done(err); }
+      if (!user) {
+        return done(null, false, { message: 'Incorrect username.' });
+      }
+      encryptedPassword = await bcrypt.hash(password, authConfig.bcrypt.saltRounds);
+      if (!user.validPassword(encryptedPassword)) {
+        return done(null, false, { message: 'Incorrect password.' });
+      }
+      return done(null, user);
     });
-};
+  }
+}));
 
 module.exports = ex;

@@ -12,14 +12,14 @@ module.exports = {
              error.fail = true;
            };
          })
-     }
+     },
 
     testPassword(password, error){
       if (password.length < 3){
             error.type.push('password');
             error.fail = true;
         }
-    }
+    },
 
     testConf(password, conf, error){
       if (password != conf){

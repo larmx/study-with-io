@@ -1,14 +1,12 @@
 const mongoose = require('mongoose');
+const db = require('../config/db.json');
 mongoose.Promise = global.Promise;
-mongoose.connect("mongodb://localhost/users");
-const Hash = require('password-hash');
+mongoose.connect(`${db.uri}users`);
 const Schema = mongoose.Schema;
 
 const UserSchema = new Schema({
     username: { type: String },
-    password: { type: String, set: function(newValue) {
-        return Hash.isHashed(newValue) ? newValue : Hash.generate(newValue);
-    } },
+    password: { type: String },
     status: { type: String },
     grade: { type: Number },
     goal: { type: Number },

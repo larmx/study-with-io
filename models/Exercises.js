@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
-
+const db = require('../config/db.json');
 mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://localhost/users');
+mongoose.connect(`${db.uri}exercises`);
 const { Schema } = mongoose;
 
 const ExerciseSchema = new Schema({
