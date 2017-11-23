@@ -1,22 +1,11 @@
-import passport from '../config/passport';
-
 const express = require('express');
-const app = require('../app');
-const router = express.Router();
+const users = require('../controllers/users');
 
+module.exports = function(app, passport){
+    const ensureLoggedIn = require('connect-ensure-login').ensureLoggedIn;
 
-/* GET users listing. */
-router.get('/', (req, res, next) => {
-  res.send('respond with a resource');
-});
-
-
-app.post('/login', passport.authenticate('local', {
-  successRedirect: '/home',
-  failureRedirect: '/login',
-  failureFlash: true,
-}));
-
-
-module.exports = router;
-
+    app.all('/student/*', users.requireStudent);
+    app.get('/admin/users', users.index);
+    app.post('/student', users.create);
+    app.post('/student/delete', user.delete);
+}
