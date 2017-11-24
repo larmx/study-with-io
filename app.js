@@ -1,21 +1,19 @@
 const express = require('express');
+const helpers = require('./utils/helpers')
+const path = require('path');
 
-express.Router.group = function group(path, callback) {
-  const router = express.Router({ mergeParams: true });
-  callback(router);
-  this.use(path, router);
-  return router;
-};
+express.Router.group = helpers.group;
 express.application.group = express.Router.group;
 
-const path = require('path');
+
 const favicon = require('serve-favicon');
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const passport = require('passport');
 
 const users = require('./routes/users');
-
 const app = express();
 
 
@@ -30,6 +28,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use('/', users);
 
