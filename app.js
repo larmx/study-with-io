@@ -1,55 +1,47 @@
 const express = require('express');
-const helpers = require('./utils/helpers')
-const path = require('path');
 
-express.Router.group = helpers.group;
+express.Router.group = function group(path, callback) {
+  const router = express.Router({ mergeParams: true });
+  callback(router);
+  this.use(path, router);
+  return router;
+};
 express.application.group = express.Router.group;
 
-
-const favicon = require('serve-favicon');
-const logger = require('morgan');
-const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
-const passport = require('passport');
-
-const users = require('./routes/users');
 const app = express();
+app.set('port', process.env.PORT || 3001);
 
+// const favicon = require('serve-favicon');
+const logger = require('morgan');
+const bodyParser = require('body-parser');
+const helmet = require('helmet');
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(helmet());
+
+// Express only serves static assets in production
+// TODO: build the admin interface in the ./front folder
+// app.use(express.static('front/build'));
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(logger('tiny'));
+} else if (process.env.NODE_ENV === 'development') {
+  app.use(logger('dev'));
+}
 
 // uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+// app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 
-app.use(passport.initialize());
-app.use(passport.session());
+const apiRoutes = require('./routes');
+const ResponseFormat = require('./utils/responseFormat');
 
-app.use('/', users);
+app.use('/api', apiRoutes);
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  const err = new Error('Not Found');
-  err.status = 404;
-  next(err);
-});
+app.all('*', (req, res) => new ResponseFormat(res).notFound().send());
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+app.listen(app.get('port'), () => {
+  console.log(`Admin server at: http://localhost:${app.get('port')}/`); // eslint-disable-line no-console
 });
 
 module.exports = app;

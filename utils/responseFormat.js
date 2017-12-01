@@ -1,5 +1,4 @@
 class ResponseFormat {
-
   constructor(res) {
     this.res = res;
     this.data = null;
@@ -16,6 +15,12 @@ class ResponseFormat {
   created(data = 'Créé') {
     this.data = data;
     this.res.status(201);
+
+    return this;
+  }
+
+  addPayload(payload) {
+    this.payload = payload;
 
     return this;
   }
@@ -56,7 +61,6 @@ class ResponseFormat {
 
     return this.res.json(result);
   }
-
 }
 
 module.exports = ResponseFormat;

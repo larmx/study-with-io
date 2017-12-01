@@ -1,138 +1,119 @@
-const User = require('../models/user');
+const { User } = require('../models');
 const bcrypt = require('bcrypt');
-const authConfig = require('../config/auth');
+const uuidv4 = require('uuid/v4');
+const jwt = require('jsonwebtoken');
+const authConfig = require('../config/auth.json').users;
 const ResponseFormat = require('../utils/responseFormat');
 
-function testUsername(username){
-    try {
-        if (username.length < 3){
-            throw new Error("Username too short (lenght > 3)");
-           }
-         User.find({username : username}, function(err, user){
-             if (user[0]!=null){
-                 throw new Error("Username already exits");
-             };
-          })
-    } catch (e) {
-        return new ResponseFormat(res).error(e.message).send();
-    }
- };
+async function login(req, res) {
+  const username = req.body.username;
+  const password = req.body.password;
 
-function testPassword(password, error){
-  if (password.length < 3){
-        throw new Error("Password too short (lenght > 3)");
-    }
-};
+  try {
+    const existingUser = await User.findOne({
+      username
+    });
 
-function testConf(password, conf, error){
-  if (password != conf){
-    throw new Error("Confirmation doesn't match password");
+    if (!existingUser) {
+      return new ResponseFormat(res).forbidden('Ce pseudo ne correspond à aucun compte existant').send();
+    }
+
+    const rightPassword = await bcrypt.compare(password, existingUser.password);
+
+    if (!rightPassword) {
+      return new ResponseFormat(res).forbidden('Mot de passe incorrect').send();
+    }
+
+    existingUser.refreshToken = uuidv4();
+    const accessToken = await jwt.sign({
+      userId: existingUser.id
+    }, authConfig.jwt.privateKey, { expiresIn: authConfig.jwt.expiration });
+
+    await existingUser.save();
+
+    return new ResponseFormat(res).success({
+      token: accessToken,
+      refreshToken: existingUser.refreshToken,
+      userId: existingUser.id
+    }).send();
+  } catch (err) {
+    return new ResponseFormat(res).error(err).send();
   }
-};
-
-function requireStudent (req, res, next) {
-   if (!req.user){
-        return new ResponseFormat(res).forbidden().send();
-   }
-   if (req.user.status === "Student"){
-        return new ResponseFormat(res).success().send();
-    }else{
-        return new ResponseFormat(res).forbidden().send();
-    }
-};
-
-function login(req, res) {
-  if (req.user.statut == "Student"){
-    return res.redirect('/student');
-    }
-  if (req.user.statut == "Teacher"){
-    return res.redirect('/teacher');
-    }
-  else {
-    return res.redirect('/');
-  }
-};
+}
 
 function logout(req, res) {
-    req.logout();
-    return new ResponseFormat(res).success().send();
-};
+  req.logout();
+  return new ResponseFormat(res).success().send();
+}
 
-function index(req, res) {
-    const search = req.param("search");
-    if (search == null){
-        User.find({}, function(err, users){
-            if(err){
-                return new ResponseFormat(res).error(err).send();
-            }
-            return new ResponseFormat(res).success(users).send();
-        });
-    } else {
-        User.find({username : search}, function(err, users){
-            if(err){
-                return new ResponseFormat(res).error(err).send();
-            }
-            return new ResponseFormat(res).success(users).send();
-        });
+async function register(req, res) {
+  const {
+    username, password, status, goal, grade
+  } = req.body;
+
+  if (password.length < 6) {
+    return new ResponseFormat(res).error('Le mot de passe doit au moins contenir 6 caractères').send();
+  }
+
+  const encryptedPassword = await bcrypt.hash(password, authConfig.bcrypt.saltRounds);
+  await User.create({
+    username, password: encryptedPassword, status, grade, goal
+  }, (err) => {
+    if (err) {
+      return new ResponseFormat(res).error(err).send();
     }
-};
+    return new ResponseFormat(res).created().send();
+  });
 
-async function register(req, res){
-    const { username, password, conf, status, goal, grade} = req.body;
-    console.log(username);
-    testUsername(username);
-    encryptedPassword = await bcrypt.hash(password, authConfig.bcrypt.saltRounds);
-    User.create({username: username, password: encryptedPassword, status: status, grade: grade, goal: goal}, function(err, user) {
-        if(err){
-            return new ResponseFormat(res).error(err).send();
-        }
-        return new ResponseFormat(res).success().send();
-      });
-};
+  return null;
+}
 
 async function update(req, res) {
-    const { username, password, goal, grade} = req.body;
-    const { idUser } = req.params;
+  const {
+    username, password, goal, grade
+  } = req.body;
+  const { idUser } = req.params;
 
-    if (!idUser) {
-      return new ResponseFormat(res).forbidden('ID utilisateur manquant.').send();
+  if (!idUser) {
+    return new ResponseFormat(res).forbidden('ID utilisateur manquant.').send();
+  }
+
+  try {
+    const user = await User.findById(idUser);
+
+    if (!user) {
+      return new ResponseFormat(res).notFound('Utilisateur introuvable.').send();
     }
 
-    try {
-      const user = await User.findById(idUser);
+    user.username = username || user.username;
+    user.password = password || user.password;
+    user.goal = goal || user.goal;
+    user.grade = grade || user.grade;
 
-      if (!user) {
-        return new ResponseFormat(res).notFound('Utilisateur introuvable.').send();
-      }
+    await user.validate();
 
-      user.username = username || user.username;
-      user.password = password || user.password;
-      user.goal = goal || user.goal;
-      user.grade = grade || user.grade;
-
-      await user.validate();
-
-      if (password) {
-        user.password = await bcrypt.hash(password, authConfig.bcrypt.saltRounds);
-      }
-
-      await user.save();
-
-      return new ResponseFormat(res).success(user).send();
-
-    } catch (e) {
-      return new ResponseFormat(res).error(e).send();
+    if (password) {
+      user.password = await bcrypt.hash(password, authConfig.bcrypt.saltRounds);
     }
-};
 
-function deleteUser(req, res){
-    const id = req.param("id");
-    User.findByIdAndRemove(id, function(err, user){
-        if(err){
-            return new ResponseFormat(res).error(err).send();
-        }
-        return new ResponseFormat(res).success().send();
-    });
-};
+    await user.save();
 
-module.exports = {login, logout, index, register, update, deleteUser};
+    return new ResponseFormat(res).success(user).send();
+  } catch (e) {
+    return new ResponseFormat(res).error(e).send();
+  }
+}
+
+function deleteUser(req, res) {
+  const id = req.param('id');
+  User.findByIdAndRemove(id, (err) => {
+    if (err) {
+      return new ResponseFormat(res).error(err).send();
+    }
+    return new ResponseFormat(res).success().send();
+  });
+}
+
+module.exports = {
+  login, logout, register, update, deleteUser
+};
