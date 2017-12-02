@@ -34,7 +34,8 @@ async function login(req, res) {
     return new ResponseFormat(res).success({
       token: accessToken,
       refreshToken: existingUser.refreshToken,
-      userId: existingUser.id
+      userId: existingUser.id,
+      status: existingUser.status
     }).send();
   } catch (err) {
     return new ResponseFormat(res).error(err).send();
