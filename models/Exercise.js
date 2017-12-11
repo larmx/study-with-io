@@ -1,8 +1,6 @@
 const mongoose = require('mongoose');
-const db = require('../config/db.json');
 
 mongoose.Promise = global.Promise;
-mongoose.createConnection(`${db.uri}exercises`, { useMongoClient: true });
 const { Schema } = mongoose;
 
 const ExerciseSchema = new Schema({
@@ -10,13 +8,27 @@ const ExerciseSchema = new Schema({
     type: String,
     required: true
   },
-  time: {
+  instructions: {
+    type: String,
+    required: true
+  },
+  difficulty: {
     type: Number,
     required: true
   },
-  points: {
-    type: Number,
-    required: true
+  questions: [
+    {
+      question: String,
+      answers: [String],
+      answerIndex: Number,
+      points: Number,
+      time: Number,
+      hint: String,
+    }
+  ],
+  chapter: {
+    type: String,
+    required: true,
   }
 });
 

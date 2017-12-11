@@ -1,4 +1,11 @@
 const express = require('express');
+const mongoose = require('mongoose');
+const config = require('config');
+
+// Connexion à la base de données
+console.log(config);
+const dbConfig = config.get('Mlab.dbConfig');
+mongoose.connect(dbConfig.host);
 
 express.Router.group = function group(path, callback) {
   const router = express.Router({ mergeParams: true });
@@ -29,6 +36,14 @@ if (process.env.NODE_ENV === 'production') {
 } else if (process.env.NODE_ENV === 'development') {
   app.use(logger('dev'));
 }
+
+// Enabling CORS
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, HEAD, DELETE");
+  next();
+});
 
 // uncomment after placing your favicon in /public
 // app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));

@@ -1,8 +1,0 @@
-{
-    "development":{
-        "host": "localhost",
-        "database": "studywithio",
-        "dialect": "mongodb"
-    },
-    "uri": "mongodb://localhost/"
-}

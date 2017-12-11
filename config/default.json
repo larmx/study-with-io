@@ -1,0 +1,12 @@
+{
+    "Mlab": {
+        "dbConfig": {
+            "host": "mongodb://admin:swio@ds133496.mlab.com:33496/swio"
+        }
+    },
+    "LocalDB": {
+        "dbConfig": {
+            "host": "mongodb://mongo:27017/vamservices"
+        }
+    }
+}

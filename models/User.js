@@ -1,26 +1,36 @@
 const mongoose = require('mongoose');
-const db = require('../config/db.json');
 
 const Schema = mongoose.Schema;
 mongoose.Promise = global.Promise;
-mongoose.connect(`${db.uri}users`, { useMongoClient: true });
 
 const UserSchema = new Schema({
-  username: {
+  email: {
     type: String,
     unique: true,
-    required: true
+    required: true,
   },
   password: {
     type: String,
-    required: true
+    required: true,
   },
-  status: String,
+  firstname: String,
+  lastname: String,
+  phone: String,
+  role: String,
   grade: Number,
   goal: Number,
-  totalPoint: Number,
-  professorId: Array,
-  refreshToken: String
+  currentPoints: Number,
+  totalPoints: Number,
+  badges: [Number],
+  relationships: [
+    {
+      recipient: Schema.Types.ObjectId,
+      rStatus: String,
+    }
+  ],
+  exercises: [Schema.Types.ObjectId],
+  recommendedExercises: [Schema.Types.ObjectId],
+  refreshToken: String,
 });
 
 const User = mongoose.model('User', UserSchema);
