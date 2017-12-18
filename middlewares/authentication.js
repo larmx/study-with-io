@@ -23,12 +23,11 @@ exports.userAuthenticate = (req, res, next) => {
     return new ResponseFormat(res).forbidden('No token provided').send();
   }
 
-  return jwt.verify(token, authConfig.jwt.privateKey, (err, decoded) => {
+  return jwt.verify(token, authConfig.users.jwt.privateKey, (err, decoded) => {
     if (err) {
       return new ResponseFormat(res).forbidden('Failed to authenticate token').addPayload({ resetToken: 'access' }).send();
     }
-
-    if (req.params.userId && (req.params.userId !== decoded.userId.toString())) {
+    if (req.body.userId && (req.body.userId !== decoded.userId.toString())) {
       return new ResponseFormat(res).forbidden('Authorization rejected').send();
     }
 

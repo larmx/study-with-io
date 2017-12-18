@@ -7,30 +7,43 @@ const UserSchema = new Schema({
   email: {
     type: String,
     unique: true,
-    required: true,
+    required: true
   },
   password: {
     type: String,
-    required: true,
+    required: true
   },
   firstname: String,
   lastname: String,
   phone: String,
   role: String,
   grade: Number,
-  goal: Number,
-  currentPoints: Number,
-  totalPoints: Number,
+  goal: {
+    type: Number,
+    default: 0
+  },
+  progress: {
+    type: Number,
+    default: 0
+  },
+  currentPoints: {
+    type: Number,
+    default: 0
+  },
+  totalPoints: {
+    type: Number,
+    default: 0
+  },
   badges: [Number],
   relationships: [
     {
       recipient: Schema.Types.ObjectId,
-      rStatus: String,
+      rStatus: String
     }
   ],
   exercises: [Schema.Types.ObjectId],
   recommendedExercises: [Schema.Types.ObjectId],
-  refreshToken: String,
+  refreshToken: String
 });
 
 const User = mongoose.model('User', UserSchema);

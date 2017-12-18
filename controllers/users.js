@@ -9,7 +9,7 @@ const _ = require('lodash');
 function isrStatus(value) {
   return value.relationship.rStatus == this;
 }
- 
+
 async function login(req, res) {
   const email = req.body.email;
   const password = req.body.password;
@@ -40,10 +40,38 @@ async function login(req, res) {
       token: accessToken,
       refreshToken: existingUser.refreshToken,
       userId: existingUser.id,
-      role: existingUser.role
+      role: existingUser.role,
+      goal: existingUser.goal,
+      points: existingUser.currentPoints,
+      objective: existingUser.objective,
+      progress: existingUser.progress
     }).send();
   } catch (err) {
     return new ResponseFormat(res).error(err).send();
+  }
+}
+
+async function onOpen(req, res) {
+  const id = req.body.userId;
+  try {
+    const user = await User.findById(id);
+    console.log(user);
+    user.refreshToken = uuidv4();
+    const accessToken = await jwt.sign({
+      userId: user.id
+    }, authConfig.jwt.privateKey, { expiresIn: authConfig.jwt.expiration });
+    return new ResponseFormat(res).success({
+      token: accessToken,
+      refreshToken: user.refreshToken,
+      userId: user.id,
+      role: user.role,
+      goal: user.goal,
+      points: user.currentPoints,
+      objective: user.objective,
+      progress: user.progress
+    }).send();
+  } catch (err2) {
+    return new ResponseFormat(res).error(err2).send();
   }
 }
 
@@ -54,7 +82,7 @@ function logout(req, res) {
 
 async function register(req, res) {
   const {
-    email, firstname, lastname, password, status, goal, grade
+    email, firstname, lastname, password, role, goal, grade
   } = req.body;
 
   if (password.length < 6) {
@@ -95,7 +123,7 @@ async function update(req, res) {
   const {
     email, password, goal, grade
   } = req.body;
-  const { idUser } = req.params;
+  const idUser = req.body.userId;
 
   if (!idUser) {
     return new ResponseFormat(res).forbidden('ID utilisateur manquant.').send();
@@ -128,8 +156,8 @@ async function update(req, res) {
 }
 
 function deleteUser(req, res) {
-  const { idUser } = req.params;
-  User.findByIdAndRemove(idUser, (err) => {
+  const id = req.params.userId;
+  User.findByIdAndRemove(id, (err) => {
     if (err) {
       return new ResponseFormat(res).error(err).send();
     }
@@ -137,20 +165,30 @@ function deleteUser(req, res) {
   });
 }
 
-function getPhone(req, res) {
-  const { idUser } = req.params;
-  User.findById(idUser,
+function getContactInfo(req, res) {
+  const id = req.params.userId;
+  console.log('bite');
+  console.log(id);
+  User.findById(
+    id,
     (err, user) => {
       if (err) {
         return new ResponseFormat(res).error(err).send();
       }
-      return new ResponseFormat(res).success(phone).send();
-    });
+      const info = {
+        firstname: user.firstname,
+        lastname: user.lastname,
+        email: user.email,
+        phone: user.phone
+      };
+      return new ResponseFormat(res).success(info).send();
+    }
+  );
 }
 
 function getExercises(req, res) {
-  const { idUser } = req.params;
-  User.findById(idUser, (err) => {
+  const id = req.params.userId;
+  User.findById(id, (err) => {
     if (err) {
       return new ResponseFormat(res).error(err).send();
     }
@@ -241,7 +279,7 @@ function getTeachers(req, res) {
   const query = User.find({
     role: 'teacher'
   });
-  query.select('email firstname lastname');
+  query.select('_id email firstname lastname');
   query.exec((err, teachers) => {
     if (err) {
       return new ResponseFormat(res).error(err).send();
@@ -279,7 +317,7 @@ function getRequests(req, res) {
 }
 
 function getRelations(req, res) {
-  const id = req.params.id;
+  const id = req.params.userId;
   User.findById(
     id,
     (err, user) => {
@@ -288,72 +326,64 @@ function getRelations(req, res) {
       }
       const relationships = _.map(user.relationships, (key, value) =>
         ({ relationship: key, _id: key._id }));
-      const result = relationships: relationships.filter(isrStatus, 'accepted');
+      const result = { relationships: relationships.filter(isrStatus, 'accepted') };
       return new ResponseFormat(res).success(result).send();
     });
 }
 
 function sendRequest(req, res) {
+  const id = req.body.idRecipient;
+  console.log(id);
+  User.findByIdAndUpdate(
+    id,
+    {
+      $push: {
+        'relationships': {
+          recipient: id,
+          rStatus: 'pending'
+        }
+      }
+    },
+    (err) => {
+      if (err) {
+        return new ResponseFormat(res).error(err).send();
+      }
+      return new ResponseFormat(res).success().send();
+    }
+  );
+}
+
+function acceptRequest(req, res) {
   const idrq = req.body.idRequester;
   const idrc = req.body.idRecipient;
-  console.log(idrq);
-  console.log(idrc);
   User.findByIdAndUpdate(
     idrq,
     {
       $push: {
         'relationships': {
           recipient: idrc,
-          rStatus: 'pending',
+          rStatus: 'accepted'
         }
       }
-    },
-    (err) => {
+    }, (err, user) => {
       if (err) {
-        console.log(err);
         return new ResponseFormat(res).error(err).send();
       }
-      User.findByIdAndUpdate(
-        idrc,
-        {
-          $push: {
-            'relationships': {
-              recipient: idrq,
-              rStatus: 'pending',
-            }
-          }
-        },
-        (err2) => {
-          if (err2) {
-            return new ResponseFormat(res).error(err).send();
-          }
-          return new ResponseFormat(res).success().send();
-        });
-    });
-}
-
-function acceptRequest(req, res) {
-  const idrq = req.body.idRequester;
-  const idrc = req.body.idRecipient;
-  User.findById(idrq, (err, user) => {
-    if (err) {
-      return new ResponseFormat(res).error(err).send();
-    } else {
-      const recipient = user.relationships.id(idrc);
+      const recipient = user.relationships.find(relationship =>
+        relationship.recipient == idrc);
       recipient.rStatus = 'accepted';
       user.save();
-      User.findById(idrc, (err, user) => {
-        if (err) {
-          return new ResponseFormat(res).error(err).send();
-        } else {
-          const requester = user.relationships.id(idrq);
-          requester.rStatus = 'accepted';
-          user.save();
-          return new ResponseFormat(res).success().send();
+      User.findById(idrc, (err2, user2) => {
+        if (err2) {
+          return new ResponseFormat(res).error(err2).send();
         }
+        const requester = user2.relationships.id(idrq);
+        requester.rStatus = 'accepted';
+        user.save();
+        return new ResponseFormat(res).success().send();
       });
     }
-  });
+  );
 }
 
 function refuseRequest(req, res) {
@@ -392,6 +422,7 @@ function refuseRequest(req, res) {
 
 module.exports = {
   login,
+  onOpen,
   logout,
   register,
   update,
@@ -400,7 +431,7 @@ module.exports = {
   getStudents,
   getRelations,
   getRequests,
-  getRelations,
+  getContactInfo,
   sendRequest,
   acceptRequest,
   refuseRequest,
@@ -408,5 +439,5 @@ module.exports = {
   removePoints,
   getExercises,
   addExercise,
-  addRecommendedExercise,
+  addRecommendedExercise
 };

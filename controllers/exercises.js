@@ -2,17 +2,18 @@ const { Exercise } = require('../models');
 const { User } = require('../models');
 const ResponseFormat = require('../utils/responseFormat');
 
-function getExercise(req, res) {
-  const { idUser } = req.params;
-  Exercise.findById(
-    idUser,
-    (err) => {
-      if (err) {
-        return new ResponseFormat(res).error(err).send();
-      }
-      return new ResponseFormat(res).success().send();
+function addExercise(req, res) {
+  const {
+    title, instructions, difficulty, questions, chapter
+  } = req.body;
+  Exercise.create({
+    title, instructions, difficulty, questions, chapter
+  }, (err) => {
+    if (err) {
+      return new ResponseFormat(res).error(err).send();
     }
-  );
+    return new ResponseFormat(res).success().send();
+  });
 }
 
 function getExercises(req, res) {
@@ -61,6 +62,6 @@ function getExercises(req, res) {
 }
 
 module.exports = {
-  getExercise,
+  addExercise,
   getExercises
 };
