@@ -23,7 +23,8 @@ const ExerciseSchema = new Schema({
       answerIndex: Number,
       points: Number,
       time: Number,
-      hint: String
+      hint: String,
+      explanation: String
     }
   ],
   notion: {

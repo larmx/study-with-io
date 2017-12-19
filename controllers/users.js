@@ -282,7 +282,7 @@ function lastLessonNotions(req, res) {
       return new ResponseFormat(res).error(err).send();
     }
     if (user.notions.length > 0) {
-      const lastLesson = user.notions[user.notions.length - 1];
+      const lastLesson = user.notions[user.notions.length - 1].date;
       const result = user.notions.filter(notion =>
         notion.date.getDate() == lastLesson.getDate() &&
         notion.date.getMonth() == lastLesson.getMonth() &&
@@ -300,7 +300,7 @@ function lastTestNotions(req, res) {
       return new ResponseFormat(res).error(err).send();
     }
     if (user.tests.length > 0) {
-      if (user.tests[user.tents.length - 1] > Date.now()) {
+      if (user.tests[user.tests.length - 1] > Date.now()) {
         if (user.tests.length > 1) {
           const lastTest = user.tests[user.tests.length - 2];
           const result = user.notions.filter(notion =>
