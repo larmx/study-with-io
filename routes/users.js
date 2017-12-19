@@ -13,6 +13,8 @@ usersRoutes.group('/:userId', (userRoutes) => {
   userRoutes.get('/requests', users.getRequests);
   userRoutes.get('/relations', users.getRelations);
   userRoutes.get('/info', users.getContactInfo);
+  userRoutes.get('/lessonNotions', users.lastLessonNotions);
+  userRoutes.get('/testNotions', users.lastTestNotions);
 });
 usersRoutes.get('/teachers', users.getTeachers);
 usersRoutes.get('/students', users.getStudents);
@@ -24,5 +26,7 @@ usersRoutes.post('/recommendExercise', users.addRecommendedExercise);
 usersRoutes.post('/addPoints', users.addPoints);
 usersRoutes.post('/removePoints', users.removePoints);
 usersRoutes.post('/onOpen', userAuthenticate, users.onOpen);
+usersRoutes.post('/nextTest', userAuthenticate, users.nextTest);
+usersRoutes.post('/lessonEnd', userAuthenticate, users.lessonEnd);
 
 module.exports = usersRoutes;

@@ -22,10 +22,35 @@ const UserSchema = new Schema({
     type: Number,
     default: 0
   },
-  progress: {
-    type: Number,
-    default: 0
-  },
+  notions: [
+    {
+      name: String,
+      level: {
+        type: Number,
+        default: 1
+      },
+      date: {
+        type: Date,
+        default: Date.now
+      }
+    }
+  ],
+  tests: [
+    {
+      date: {
+        type: Date,
+        default: Date.now
+      }
+    }
+  ],
+  lessons: [
+    {
+      date: {
+        type: Date,
+        default: Date.now
+      }
+    }
+  ],
   currentPoints: {
     type: Number,
     default: 0

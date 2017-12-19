@@ -275,6 +275,104 @@ function removePoints(req, res) {
     });
 }
 
+function lastLessonNotions(req, res) {
+  const id = req.params.userId;
+  User.findById(id, (err, user) => {
+    if (err) {
+      return new ResponseFormat(res).error(err).send();
+    }
+    if (user.notions.length > 0) {
+      const lastLesson = user.notions[user.notions.length - 1];
+      const result = user.notions.filter(notion =>
+        notion.date.getDate() == lastLesson.getDate() &&
+        notion.date.getMonth() == lastLesson.getMonth() &&
+        notion.date.getFullYear() == lastLesson.getFullYear());
+      return new ResponseFormat(res).success(result).send();
+    }
+    return new ResponseFormat(res).success([]).send();
+  });
+}
+
+function lastTestNotions(req, res) {
+  const id = req.params.userId;
+  User.findById(id, (err, user) => {
+    if (err) {
+      return new ResponseFormat(res).error(err).send();
+    }
+    if (user.tests.length > 0) {
+      if (user.tests[user.tents.length - 1] > Date.now()) {
+        if (user.tests.length > 1) {
+          const lastTest = user.tests[user.tests.length - 2];
+          const result = user.notions.filter(notion =>
+            notion.date.getDate() == lastTest.getDate() &&
+            notion.date.getMonth() == lastTest.getMonth() &&
+            notion.date.getFullYear() == lastTest.getFullYear());
+          return new ResponseFormat(res).success(result).send();
+        }
+        return new ResponseFormat(res).success([]).send();
+      }
+      const lastTest = user.tests[user.tests.length - 1];
+      const result = user.notions.filter(notion =>
+        notion.date.getDate() == lastTest.getDate() &&
+        notion.date.getMonth() == lastTest.getMonth() &&
+        notion.date.getFullYear() == lastTest.getFullYear());
+      return new ResponseFormat(res).success(result).send();
+    }
+    return new ResponseFormat(res).success([]).send();
+  });
+}
+
+function nextTest(req, res) {
+  const id = req.body.userId;
+  const testDate = req.body.testDate;
+  User.findByIdAndUpdate(
+    id,
+    {
+      $push: {
+        tests: testDate
+      }
+    }
+  );
+}
+
+function lessonEnd(req, res) {
+  const id = req.body.userId;
+  const notions = req.body.notions;
+  notions.forEach((notion) => {
+    User.findOneAndUpdate(
+      {
+        _id: id,
+        'notions.name': notion.name
+      },
+      {
+        $set: {
+          'notions.$.date': Date.now,
+          'notions.$.level': notion.level
+        }
+      },
+      (err) => {
+        if (err) {
+          return new ResponseFormat(res).error(err).send();
+        }
+        User.findByIdAndUpdate(
+          id,
+          {
+            $push: {
+              lessons: Date.now
+            }
+          },
+          (err2) => {
+            if (err2) {
+              return new ResponseFormat(res).error(err).send();
+            }
+            return new ResponseFormat(res).success().send();
+          }
+        );
+      }
+    );
+  });
+}
+
 function getTeachers(req, res) {
   const query = User.find({
     role: 'teacher'
@@ -437,6 +535,10 @@ module.exports = {
   refuseRequest,
   addPoints,
   removePoints,
+  lastLessonNotions,
+  lastTestNotions,
+  nextTest,
+  lessonEnd,
   getExercises,
   addExercise,
   addRecommendedExercise
