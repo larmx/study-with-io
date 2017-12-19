@@ -249,6 +249,9 @@ function addPoints(req, res) {
         totalPoints: pts
       }
     },
+    {
+      new: true
+    },
     (err) => {
       if (err) {
         return new ResponseFormat(res).error(err).send();

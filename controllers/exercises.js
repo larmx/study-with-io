@@ -4,10 +4,10 @@ const ResponseFormat = require('../utils/responseFormat');
 
 function addExercise(req, res) {
   const {
-    title, instructions, difficulty, questions, chapter
+    title, instructions, difficulty, questions, notion
   } = req.body;
   Exercise.create({
-    title, instructions, difficulty, questions, chapter
+    title, instructions, difficulty, questions, notion
   }, (err) => {
     if (err) {
       return new ResponseFormat(res).error(err).send();
