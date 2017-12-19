@@ -24,44 +24,43 @@ function getExercises(req, res) {
     }
     const finishedExercises = res.exercises;
     const recommendedExercises = res.recommendedExercises;
-    const result = {
-      finishedExercises,
-      recommendedExercises,
-    }
-    const query = Exercise.find(
-    {
+    const query = Exercise.find({
       _id: {
         $nin: finishedExercises,
         $in: recommendedExercises
-      },
+      }
     })
-    .limit(5);
-    query.exec((err, exercises) => {
-      if (err) {
-        return new ResponseFormat(res).error(err).send();
+      .limit(5);
+    query.exec((err2, exercises) => {
+      if (err2) {
+        return new ResponseFormat(res).error(err3).send();
       }
       if (exercises.length < 5) {
         const n = 5 - exercises.length;
-        const query2 = Exercise.find(
-        {
+        const query2 = Exercise.find({
           _id: {
-            $nin: finishedExercises,
-            $nin: recommendedExercises
-          },
+            $nin: finishedExercises.concat(recommendedExercises)
+          }
         })
-        .limit(n);
-        query2.exec((err, exercises2) => {
-          if (err) {
-            return new ResponseFormat(res).error(err).send();
+          .limit(n);
+        query2.exec((err3, exercises2) => {
+          if (err3) {
+            return new ResponseFormat(res).error(err3).send();
           }
           const result = exercises.concat(exercises2);
           return new ResponseFormat(res).success(result).send();
         });
       }
     });
+  });
+}
+
+function getTeacherExercises(req, res) {
+
 }
 
 module.exports = {
   addExercise,
-  getExercises
+  getExercises,
+  getTeacherExercises
 };
