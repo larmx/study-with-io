@@ -325,12 +325,22 @@ function lastTestNotions(req, res) {
 function nextTest(req, res) {
   const id = req.body.userId;
   const testDate = req.body.testDate;
+  const notions = req.body.notions;
   User.findByIdAndUpdate(
     id,
     {
       $push: {
-        tests: testDate
+        tests: {
+          date: testDate,
+          notions
+        }
       }
+    },
+    (err) => {
+      if (err) {
+        return new ResponseFormat(res).error(err).send();
+      }
+      return new ResponseFormat(res).success().send();
     }
   );
 }
