@@ -1,5 +1,6 @@
 const express = require('express');
 const { exercises } = require('../controllers');
+console.log(exercises);
 
 const exercisesRoutes = express.Router();
 
